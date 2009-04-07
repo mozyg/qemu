@@ -770,9 +770,7 @@ cat > $TMPC << EOF
 #include <zlib.h>
 int main(void) { zlibVersion(); return 0; }
 EOF
-if $cc $ARCH_CFLAGS -o $TMPE ${OS_CFLAGS} $TMPC -lz > /dev/null 2> /dev/null ; then
-    :
-else
+if ! $cc $ARCH_CFLAGS $CFLAGS $LDFLAGS -o $TMPE ${OS_CFLAGS} $TMPC -lz > /dev/null 2> /dev/null; then
     echo
     echo "Error: zlib check failed"
     echo "Make sure to have the zlib libs and headers installed."
@@ -1032,7 +1030,8 @@ fi
 ##########################################
 # kvm probe
 if test "$kvm" = "yes" ; then
-    cat > $TMPC <<EOF
+    if [ ! $cpu = "armv4l" ]; then
+        cat > $TMPC <<EOF
 #include <linux/kvm.h>
 #if !defined(KVM_API_VERSION) || KVM_API_VERSION < 12 || KVM_API_VERSION > 12
 #error Invalid KVM version
@@ -1048,6 +1047,21 @@ if test "$kvm" = "yes" ; then
 #endif
 int main(void) { return 0; }
 EOF
+  else
+        cat > $TMPC <<EOF
+#include <linux/kvm.h>
+#if !defined(KVM_API_VERSION) || KVM_API_VERSION < 12 || KVM_API_VERSION > 12
+#error Invalid KVM version
+#endif
+#if !defined(KVM_CAP_USER_MEMORY)
+#error Missing KVM capability KVM_CAP_USER_MEMORY
+#endif
+#if !defined(KVM_CAP_SET_TSS_ADDR)
+#error Missing KVM capability KVM_CAP_SET_TSS_ADDR
+#endif
+int main(void) { return 0; }
+EOF
+  fi
   if test "$kerneldir" != "" ; then
       kvm_cflags=-I"$kerneldir"/include
       if test \( "$cpu" = "i386" -o "$cpu" = "x86_64" \) \
@@ -1142,7 +1156,7 @@ fi
 
 if test "$rt" = "yes" ; then
   # Hack, we should have a general purpose LIBS for this sort of thing
-  AIOLIBS="$AIOLIBS -lrt"
+  AIOLIBS="-lrt $AIOLIBS"
 fi
 
 if test "$mingw32" = "yes" ; then
@@ -1651,7 +1665,8 @@ gdb_xml_files=""
 if test "$kvm" = "yes" -a ! \( "$target_cpu" = "$cpu" -o \
   \( "$target_cpu" = "ppcemb" -a "$cpu" = "ppc" \) -o \
   \( "$target_cpu" = "x86_64" -a "$cpu" = "i386"   \) -o \
-  \( "$target_cpu" = "i386"   -a "$cpu" = "x86_64" \) \) ; then
+  \( "$target_cpu" = "i386"   -a "$cpu" = "x86_64" \) -o \
+  \( "$target_cpu" = "arm"   -a "$cpu" = "armv4l" \) \) ; then
   kvm="no"
 fi
 # Disable KVM for linux-user
@@ -1698,6 +1713,16 @@ case "$target_cpu" in
     echo "TARGET_ARCH=arm" >> $config_mak
     echo "#define TARGET_ARCH \"arm\"" >> $config_h
     echo "#define TARGET_ARM 1" >> $config_h
+    if test "$kvm" = "yes" ; then
+      echo "============================================="
+      echo $kvm
+      echo $target_cpu
+      echo $cpu
+      echo "============================================="
+      echo "CONFIG_KVM=yes" >> $config_mak
+      echo "KVM_CFLAGS=$kvm_cflags" >> $config_mak
+      echo "#define CONFIG_KVM 1" >> $config_h
+    fi
     bflt="yes"
     target_nptl="yes"
     gdb_xml_files="arm-core.xml arm-vfp.xml arm-vfp3.xml arm-neon.xml"

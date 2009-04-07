@@ -4953,6 +4953,7 @@ int main(int argc, char **argv, char **envp)
         }
     }
 
+
 #if defined(CONFIG_KVM) && defined(USE_KQEMU)
     if (kvm_allowed && kqemu_allowed) {
         fprintf(stderr,
