@@ -1714,11 +1714,6 @@ case "$target_cpu" in
     echo "#define TARGET_ARCH \"arm\"" >> $config_h
     echo "#define TARGET_ARM 1" >> $config_h
     if test "$kvm" = "yes" ; then
-      echo "============================================="
-      echo $kvm
-      echo $target_cpu
-      echo $cpu
-      echo "============================================="
       echo "CONFIG_KVM=yes" >> $config_mak
       echo "KVM_CFLAGS=$kvm_cflags" >> $config_mak
       echo "#define CONFIG_KVM 1" >> $config_h
