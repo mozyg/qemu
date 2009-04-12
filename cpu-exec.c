@@ -341,6 +341,7 @@ int cpu_exec(CPUState *env1)
 #endif
 
             if (kvm_enabled()) {
+		printf("Going to do kvm_cpu_exec(env)\n");
                 kvm_cpu_exec(env);
                 longjmp(env->jmp_env, 1);
             }

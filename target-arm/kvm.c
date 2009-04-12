@@ -45,6 +45,18 @@ int kvm_arch_put_registers(CPUState *env)
     if (ret < 0)
         return ret;
 
+    memcpy(regs.regs, env->regs, sizeof(uint32_t) * 16);
+    /* TODO: Figure out if offset is in beginning or end of banked_spsr */
+    memcpy(regs.banked_spsr,
+	   &env->banked_spsr[1],
+	   sizeof(uint32_t) * 5);
+    memcpy(regs.banked_r13, env->banked_r13, sizeof(uint32_t) * 6);
+    memcpy(regs.banked_r14, env->banked_r14, sizeof(uint32_t) * 6);
+    memcpy(regs.usr_regs, env->usr_regs, sizeof(uint32_t) * 5);
+    memcpy(regs.fiq_regs, env->fiq_regs, sizeof(uint32_t) * 5);
+    regs.cpsr = cpsr_read(env);
+    regs.spsr = env->spsr;
+
     ret = kvm_vcpu_ioctl(env, KVM_SET_REGS, &regs);
     if (ret < 0)
         return ret;
@@ -60,6 +72,18 @@ int kvm_arch_get_registers(CPUState *env)
     ret = kvm_vcpu_ioctl(env, KVM_GET_REGS, &regs);
     if (ret < 0)
         return ret;
+
+    memcpy(env->regs, regs.regs, sizeof(uint32_t) * 16);
+    /* TODO: Figure out if offset is in beginning or end of banked_spsr */
+    memcpy(&env->banked_spsr[1],
+	   regs.banked_spsr,
+	   sizeof(uint32_t) * 5);
+    memcpy(env->banked_r13, regs.banked_r13, sizeof(uint32_t) * 6);
+    memcpy(env->banked_r14, regs.banked_r14, sizeof(uint32_t) * 6);
+    memcpy(env->usr_regs, regs.usr_regs, sizeof(uint32_t) * 5);
+    memcpy(env->fiq_regs, regs.fiq_regs, sizeof(uint32_t) * 5);
+    cpsr_write(env, regs.cpsr, 0xFFFFFFFF);
+    env->spsr = regs.spsr;
 
     return 0;
 }

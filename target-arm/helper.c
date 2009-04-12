@@ -7,6 +7,7 @@
 #include "gdbstub.h"
 #include "helpers.h"
 #include "qemu-common.h"
+#include "kvm.h"
 
 static uint32_t cortexa8_cp15_c0_c1[8] =
 { 0x1031, 0x11, 0x400, 0, 0x31100003, 0x20000000, 0x01202000, 0x11 };
@@ -267,6 +268,10 @@ CPUARMState *cpu_arm_init(const char *cpu_model)
         gdb_register_coprocessor(env, vfp_gdb_get_reg, vfp_gdb_set_reg,
                                  19, "arm-vfp.xml", 0);
     }
+
+    if (kvm_enabled())
+        kvm_init_vcpu(env);
+
     return env;
 }
 

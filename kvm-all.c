@@ -656,8 +656,9 @@ int kvm_vcpu_ioctl(CPUState *env, int type, ...)
     va_end(ap);
 
     ret = ioctl(env->kvm_fd, type, arg);
-    if (ret == -1)
+    if (ret == -1) {
         ret = -errno;
+    }
 
     return ret;
 }

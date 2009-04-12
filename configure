@@ -1069,6 +1069,8 @@ EOF
             kvm_cflags="$kvm_cflags -I$kerneldir/arch/x86/include"
 	elif test "$cpu" = "ppc" -a -d "$kerneldir/arch/powerpc/include" ; then
 	    kvm_cflags="$kvm_cflags -I$kerneldir/arch/powerpc/include"
+	elif test "$cpu" = "armv4l" -a -d "$kerneldir/arch/arm/include" ; then
+	    kvm_cflags="$kvm_cflags -I$kerneldir/arch/arm/include"
         elif test -d "$kerneldir/arch/$cpu/include" ; then
             kvm_cflags="$kvm_cflags -I$kerneldir/arch/$cpu/include"
       fi
