@@ -30,6 +30,8 @@
 
 //#define DEBUG_KVM
 
+int debug_exit = 0;
+
 #ifdef DEBUG_KVM
 #define dprintf(fmt, ...) \
     do { fprintf(stderr, fmt, ## __VA_ARGS__); } while (0)
