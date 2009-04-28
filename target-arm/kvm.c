@@ -45,17 +45,28 @@ int kvm_arch_put_registers(CPUState *env)
     if (ret < 0)
         return ret;
 
-    memcpy(regs.regs, env->regs, sizeof(uint32_t) * 16);
-    /* TODO: Figure out if offset is in beginning or end of banked_spsr */
-    memcpy(regs.banked_spsr,
-	   &env->banked_spsr[1],
-	   sizeof(uint32_t) * 5);
-    memcpy(regs.banked_r13, env->banked_r13, sizeof(uint32_t) * 6);
-    memcpy(regs.banked_r14, env->banked_r14, sizeof(uint32_t) * 6);
-    memcpy(regs.usr_regs, env->usr_regs, sizeof(uint32_t) * 5);
-    memcpy(regs.fiq_regs, env->fiq_regs, sizeof(uint32_t) * 5);
+    memcpy(regs.regs0_7, env->regs, sizeof(uint32_t) * 8);
+    memcpy(regs.usr_regs8_12, env->usr_regs, sizeof(uint32_t) * 5);
+    memcpy(regs.fiq_regs8_12, env->fiq_regs, sizeof(uint32_t) * 5);
+    regs.reg13[MODE_FIQ] = env->banked_r13[5];
+    regs.reg13[MODE_IRQ] = env->banked_r13[4];
+    regs.reg13[MODE_SUP] = env->banked_r13[1];
+    regs.reg13[MODE_ABORT] = env->banked_r13[2];
+    regs.reg13[MODE_UNDEF] = env->banked_r13[3];
+    regs.reg13[MODE_USER] = env->banked_r13[0];
+    regs.reg14[MODE_FIQ] = env->banked_r14[5];
+    regs.reg14[MODE_IRQ] = env->banked_r14[4];
+    regs.reg14[MODE_SUP] = env->banked_r14[1];
+    regs.reg14[MODE_ABORT] = env->banked_r14[2];
+    regs.reg14[MODE_UNDEF] = env->banked_r14[3];
+    regs.reg14[MODE_USER] = env->banked_r14[0];
+    regs.reg15 = env->regs[15];
     regs.cpsr = cpsr_read(env);
-    regs.spsr = env->spsr;
+    regs.spsr[MODE_FIQ] = env->banked_spsr[5];
+    regs.spsr[MODE_IRQ] = env->banked_spsr[4];
+    regs.spsr[MODE_SUP] = env->banked_spsr[1];
+    regs.spsr[MODE_ABORT] = env->banked_spsr[2];
+    regs.spsr[MODE_UNDEF] = env->banked_spsr[3];
 
     ret = kvm_vcpu_ioctl(env, KVM_SET_REGS, &regs);
     if (ret < 0)
@@ -72,18 +83,28 @@ int kvm_arch_get_registers(CPUState *env)
     ret = kvm_vcpu_ioctl(env, KVM_GET_REGS, &regs);
     if (ret < 0)
         return ret;
-
-    memcpy(env->regs, regs.regs, sizeof(uint32_t) * 16);
-    /* TODO: Figure out if offset is in beginning or end of banked_spsr */
-    memcpy(&env->banked_spsr[1],
-	   regs.banked_spsr,
-	   sizeof(uint32_t) * 5);
-    memcpy(env->banked_r13, regs.banked_r13, sizeof(uint32_t) * 6);
-    memcpy(env->banked_r14, regs.banked_r14, sizeof(uint32_t) * 6);
-    memcpy(env->usr_regs, regs.usr_regs, sizeof(uint32_t) * 5);
-    memcpy(env->fiq_regs, regs.fiq_regs, sizeof(uint32_t) * 5);
+    memcpy(env->regs, regs.regs0_7, sizeof(uint32_t) * 8);
+    memcpy(env->usr_regs, regs.usr_regs8_12, sizeof(uint32_t) * 5);
+    memcpy(env->fiq_regs, regs.fiq_regs8_12, sizeof(uint32_t) * 5);
+    env->banked_r13[5] = regs.reg13[MODE_FIQ];
+    env->banked_r13[4] = regs.reg13[MODE_IRQ];
+    env->banked_r13[1] = regs.reg13[MODE_SUP];
+    env->banked_r13[2] = regs.reg13[MODE_ABORT];
+    env->banked_r13[3] = regs.reg13[MODE_UNDEF];
+    env->banked_r13[0] = regs.reg13[MODE_USER];
+    env->banked_r14[5] = regs.reg14[MODE_FIQ];
+    env->banked_r14[4] = regs.reg14[MODE_IRQ];
+    env->banked_r14[1] = regs.reg14[MODE_SUP];
+    env->banked_r14[2] = regs.reg14[MODE_ABORT];
+    env->banked_r14[3] = regs.reg14[MODE_UNDEF];
+    env->banked_r14[0] = regs.reg14[MODE_USER];
+    env->regs[15] = regs.reg15;
     cpsr_write(env, regs.cpsr, 0xFFFFFFFF);
-    env->spsr = regs.spsr;
+    regs.spsr[MODE_FIQ] = env->banked_spsr[5];
+    regs.spsr[MODE_IRQ] = env->banked_spsr[4];
+    regs.spsr[MODE_SUP] = env->banked_spsr[1];
+    regs.spsr[MODE_ABORT] = env->banked_spsr[2];
+    regs.spsr[MODE_UNDEF] = env->banked_spsr[3];
 
     return 0;
 }
