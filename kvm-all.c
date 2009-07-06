@@ -510,6 +510,7 @@ int kvm_cpu_exec(CPUState *env)
             break;
         case KVM_EXIT_EXCEPTION:
             dprintf("kvm_exit_exception\n");
+	    qemu_system_powerdown_request();
             break;
         case KVM_EXIT_DEBUG:
             dprintf("kvm_exit_debug\n");
