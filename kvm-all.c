@@ -96,9 +96,28 @@ static KVMSlot *kvm_lookup_slot(KVMState *s, target_phys_addr_t start_addr)
     return NULL;
 }
 
+static int kvm_set_memory_region(KVMState *s, KVMSlot *slot)
+{
+    struct kvm_memory_region mem;
+    int ret;
+
+    mem.slot = slot->slot;
+    mem.guest_phys_addr = slot->start_addr;
+    mem.memory_size = slot->memory_size;
+    mem.flags = slot->flags;
+
+    ret = kvm_vm_ioctl(s, KVM_SET_MEMORY_REGION, &mem);
+    if (ret != 0) {
+        perror("kvm_set_memory_region: IOCTL failed.\n");
+    }
+
+    return ret;
+}
+
 static int kvm_set_user_memory_region(KVMState *s, KVMSlot *slot)
 {
     struct kvm_userspace_memory_region mem;
+    int ret;
 
     mem.slot = slot->slot;
     mem.guest_phys_addr = slot->start_addr;
@@ -106,7 +125,12 @@ static int kvm_set_user_memory_region(KVMState *s, KVMSlot *slot)
     mem.userspace_addr = (unsigned long)phys_ram_base + slot->phys_offset;
     mem.flags = slot->flags;
 
-    return kvm_vm_ioctl(s, KVM_SET_USER_MEMORY_REGION, &mem);
+    ret = kvm_vm_ioctl(s, KVM_SET_USER_MEMORY_REGION, &mem);
+    if (ret != 0) {
+        perror("kvm_set_user_memory_region: IOCTL failed.\n");
+    }
+
+    return ret;
 }
 
 
@@ -471,7 +495,7 @@ int kvm_cpu_exec(CPUState *env)
 
         if (ret < 0) {
             dprintf("kvm run failed %s\n", strerror(-ret));
-            abort();
+				exit(1);
         }
 
         kvm_run_coalesced_mmio(env, run);
@@ -569,8 +593,9 @@ void kvm_set_phys_mem(target_phys_addr_t start_addr,
 
             /* Not splitting */
             if ((phys_offset - (start_addr - mem->start_addr)) == 
-                mem->phys_offset)
+                mem->phys_offset) {
                 return;
+            }
 
             /* unregister whole slot */
             memcpy(&slot, mem, sizeof(slot));
@@ -596,21 +621,26 @@ void kvm_set_phys_mem(target_phys_addr_t start_addr,
 
             return;
         } else {
-            printf("Registering overlapping slot\n");
             abort();
         }
     }
     /* KVM does not need to know about this memory */
-    if (flags >= IO_MEM_UNASSIGNED)
-        return;
-
+	/*
+	 * But KVM for ARM might, unless we want to set the flag
+	 * above, but then we must consider the changes to X86 or
+	 * to use IFDEF's.
+	 */
     mem = kvm_alloc_slot(s);
     mem->memory_size = size;
     mem->start_addr = start_addr;
     mem->phys_offset = phys_offset;
     mem->flags = 0;
 
-    kvm_set_user_memory_region(s, mem);
+    if (flags >= IO_MEM_UNASSIGNED) {
+        kvm_set_memory_region(s, mem);
+    } else {
+        kvm_set_user_memory_region(s, mem);
+    }
     /* FIXME deal with errors */
 }
 
