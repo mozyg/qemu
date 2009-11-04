@@ -68,6 +68,8 @@ int kvm_arch_put_registers(CPUState *env)
     regs.spsr[MODE_ABORT] = env->banked_spsr[2];
     regs.spsr[MODE_UNDEF] = env->banked_spsr[3];
 
+    regs.cp15.c0_cpuid = env->cp15.c0_cpuid;
+
     ret = kvm_vcpu_ioctl(env, KVM_SET_REGS, &regs);
     if (ret < 0)
         return ret;
@@ -105,6 +107,8 @@ int kvm_arch_get_registers(CPUState *env)
     regs.spsr[MODE_SUP] = env->banked_spsr[1];
     regs.spsr[MODE_ABORT] = env->banked_spsr[2];
     regs.spsr[MODE_UNDEF] = env->banked_spsr[3];
+
+    env->cp15.c0_cpuid = regs.cp15.c0_cpuid;
 
     return 0;
 }
