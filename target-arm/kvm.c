@@ -1,12 +1,10 @@
 /*
- * PowerPC implementation of KVM hooks
+ * ARM implementation of KVM hooks
  *
- * Copyright IBM Corp. 2007
+ * Copyright Christoffer Dall 2009
  *
  * Authors:
- *  Jerone Young <jyoung5@us.ibm.com>
- *  Christian Ehrhardt <ehrhardt@linux.vnet.ibm.com>
- *  Hollis Blanchard <hollisb@us.ibm.com>
+ *  Chritoffer Dall <cd2436@columbia.edu>
  *
  * This work is licensed under the terms of the GNU GPL, version 2 or later.
  * See the COPYING file in the top-level directory.
@@ -25,6 +23,7 @@
 #include "kvm.h"
 #include "cpu.h"
 #include "device_tree.h"
+#include "hw/arm-misc.h"
 
 int kvm_arch_init(KVMState *s, int smp_cpus)
 {
@@ -109,6 +108,39 @@ int kvm_arch_get_registers(CPUState *env)
     regs.spsr[MODE_UNDEF] = env->banked_spsr[3];
 
     env->cp15.c0_cpuid = regs.cp15.c0_cpuid;
+
+    return 0;
+}
+
+#define KVM_ARM_EXCEPTION_IRQ 0x02
+#define KVM_ARM_EXCEPTION_FIQ 0x01
+int kvm_arch_interrupt(CPUState *env, int irq, int level)
+{
+    struct kvm_interrupt intr;
+    int ret;
+
+    if (level)
+        intr.raise = 1;
+    else
+        intr.raise = 0;
+
+    switch (irq) {
+    case ARM_PIC_CPU_IRQ:
+        intr.irq = KVM_ARM_EXCEPTION_IRQ;
+        break;
+    case ARM_PIC_CPU_FIQ:
+        intr.irq = KVM_ARM_EXCEPTION_FIQ;
+        break;
+    default:
+        fprintf(stderr, "unsupported ARM irq injection\n");
+        abort();
+    }
+
+    ret = kvm_vcpu_ioctl(env, KVM_INTERRUPT, &intr);
+    if (ret) {
+        fprintf(stderr, "kvm_vcpu_ioctl(env, KVM_INTERRUPT, &intr) failed\n");
+        abort();
+    }
 
     return 0;
 }
