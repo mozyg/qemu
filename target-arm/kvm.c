@@ -49,13 +49,13 @@ int kvm_arch_put_registers(CPUState *env)
     memcpy(regs.fiq_regs8_12, env->fiq_regs, sizeof(uint32_t) * 5);
     regs.reg13[MODE_FIQ] = env->banked_r13[5];
     regs.reg13[MODE_IRQ] = env->banked_r13[4];
-    regs.reg13[MODE_SUP] = env->banked_r13[1];
+    regs.reg13[MODE_SVC] = env->banked_r13[1];
     regs.reg13[MODE_ABORT] = env->banked_r13[2];
     regs.reg13[MODE_UNDEF] = env->banked_r13[3];
     regs.reg13[MODE_USER] = env->banked_r13[0];
     regs.reg14[MODE_FIQ] = env->banked_r14[5];
     regs.reg14[MODE_IRQ] = env->banked_r14[4];
-    regs.reg14[MODE_SUP] = env->banked_r14[1];
+    regs.reg14[MODE_SVC] = env->banked_r14[1];
     regs.reg14[MODE_ABORT] = env->banked_r14[2];
     regs.reg14[MODE_UNDEF] = env->banked_r14[3];
     regs.reg14[MODE_USER] = env->banked_r14[0];
@@ -63,7 +63,7 @@ int kvm_arch_put_registers(CPUState *env)
     regs.cpsr = cpsr_read(env);
     regs.spsr[MODE_FIQ] = env->banked_spsr[5];
     regs.spsr[MODE_IRQ] = env->banked_spsr[4];
-    regs.spsr[MODE_SUP] = env->banked_spsr[1];
+    regs.spsr[MODE_SVC] = env->banked_spsr[1];
     regs.spsr[MODE_ABORT] = env->banked_spsr[2];
     regs.spsr[MODE_UNDEF] = env->banked_spsr[3];
 
@@ -89,13 +89,13 @@ int kvm_arch_get_registers(CPUState *env)
     memcpy(env->fiq_regs, regs.fiq_regs8_12, sizeof(uint32_t) * 5);
     env->banked_r13[5] = regs.reg13[MODE_FIQ];
     env->banked_r13[4] = regs.reg13[MODE_IRQ];
-    env->banked_r13[1] = regs.reg13[MODE_SUP];
+    env->banked_r13[1] = regs.reg13[MODE_SVC];
     env->banked_r13[2] = regs.reg13[MODE_ABORT];
     env->banked_r13[3] = regs.reg13[MODE_UNDEF];
     env->banked_r13[0] = regs.reg13[MODE_USER];
     env->banked_r14[5] = regs.reg14[MODE_FIQ];
     env->banked_r14[4] = regs.reg14[MODE_IRQ];
-    env->banked_r14[1] = regs.reg14[MODE_SUP];
+    env->banked_r14[1] = regs.reg14[MODE_SVC];
     env->banked_r14[2] = regs.reg14[MODE_ABORT];
     env->banked_r14[3] = regs.reg14[MODE_UNDEF];
     env->banked_r14[0] = regs.reg14[MODE_USER];
@@ -103,11 +103,14 @@ int kvm_arch_get_registers(CPUState *env)
     cpsr_write(env, regs.cpsr, 0xFFFFFFFF);
     regs.spsr[MODE_FIQ] = env->banked_spsr[5];
     regs.spsr[MODE_IRQ] = env->banked_spsr[4];
-    regs.spsr[MODE_SUP] = env->banked_spsr[1];
+    regs.spsr[MODE_SVC] = env->banked_spsr[1];
     regs.spsr[MODE_ABORT] = env->banked_spsr[2];
     regs.spsr[MODE_UNDEF] = env->banked_spsr[3];
 
     env->cp15.c0_cpuid = regs.cp15.c0_cpuid;
+    env->cp15.c2_base0 = regs.cp15.c2_base0;
+    env->cp15.c2_base1 = regs.cp15.c2_base1;
+    env->cp15.c3 = regs.cp15.c3;
 
     return 0;
 }
