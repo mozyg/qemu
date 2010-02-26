@@ -642,7 +642,9 @@ e1000_receive(VLANClientState *nc, const uint8_t *buf, size_t size)
 
     if (vlan_enabled(s) && is_vlan_packet(s, buf)) {
         vlan_special = cpu_to_le16(be16_to_cpup((uint16_t *)(buf + 14)));
-        memmove((void *)(buf + 4), buf, 12);
+        void * b_ptr = (void *)buf;
+        void * b_ptr2 = (void *)(buf + 4);
+        memmove(b_ptr2, b_ptr, 12);
         vlan_status = E1000_RXD_STAT_VP;
         vlan_offset = 4;
         size -= 4;
