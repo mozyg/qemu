@@ -197,11 +197,13 @@ static inline void tb_set_jmp_target1(unsigned long jmp_addr, unsigned long addr
     /* no need to flush icache explicitly */
 }
 #elif defined(__arm__)
-static inline void tb_set_jmp_target1(unsigned long jmp_addr, unsigned long addr)
-{
+
 #if QEMU_GNUC_PREREQ(4, 1)
     void __clear_cache(char *beg, char *end);
-#else
+#endif
+static inline void tb_set_jmp_target1(unsigned long jmp_addr, unsigned long addr)
+{
+#if !QEMU_GNUC_PREREQ(4, 1)
     register unsigned long _beg __asm ("a1");
     register unsigned long _end __asm ("a2");
     register unsigned long _flg __asm ("a3");
