@@ -8,6 +8,10 @@
 #--enable-sdl \
 #--audio-drv-list=sdl \
 
+#NOTE(shivaram): I don't find a need for x86_64 or user mode emulation in day to day work
+#Disabling them for faster builds. Enable them if required
+#--target-list=arm-linux-user,i386-linux-user,x86_64-linux-user,arm-softmmu,i386-softmmu,x86_64-softmmu \
+
 ./configure \
 --prefix= \
 --disable-sdl \
@@ -15,7 +19,7 @@
 --disable-system \
 --enable-curses \
 --audio-drv-list= \
---target-list=arm-linux-user,i386-linux-user,x86_64-linux-user,arm-softmmu,i386-softmmu,x86_64-softmmu \
+--target-list=arm-softmmu,i386-softmmu \
 --extra-cflags="-I/usr/local/include -I/usr/local/include/ncurses" \
 --extra-ldflags="-Wl,-rpath=/usr/local/lib -L/usr/local/lib" \
 &&
