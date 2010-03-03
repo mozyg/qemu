@@ -2561,7 +2561,12 @@ if test "$ARCH" = "sparc64" ; then
 elif test "$ARCH" = "s390x" ; then
   cflags="-I\$(SRC_PATH)/tcg/s390 $cflags"
 else
-  cflags="-I\$(SRC_PATH)/tcg/\$(ARCH) $cflags"
+  #cflags="-I\$(SRC_PATH)/tcg/\$(ARCH) $cflags"
+  #NOTE(shivaram): This might be a bug in upstream qemu
+  #ARCH is never defined in config_target.mak and so this doesn't get included
+  #in the cflags. Changing it to TARGET_ARCH fixes things.
+  cflags="-I\$(SRC_PATH)/tcg/\$(TARGET_ARCH) $cflags"
+  
 fi
 cflags="-I\$(SRC_PATH)/tcg $cflags"
 cflags="-I\$(SRC_PATH)/fpu $cflags"
